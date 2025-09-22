@@ -5,6 +5,93 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Miniflix Linux</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos para o Popup (Modal) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            padding: 50px;
+        }
+
+        .modal-content {
+            background-color: #1a1a1a;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            height: 80%;
+            display: flex;
+            gap: 20px;
+            position: relative;
+        }
+
+        .modal-sidebar {
+            width: 30%;
+            overflow-y: auto;
+        }
+
+        .modal-main-content {
+            width: 70%;
+            overflow-y: auto;
+        }
+
+        .modal-sidebar h3, .modal-main-content h3 {
+            color: #e50914;
+        }
+
+        .modal-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .modal-list li {
+            padding: 10px;
+            border-bottom: 1px solid #333;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .modal-list li:hover, .modal-list li.selecionado {
+            background-color: #333;
+        }
+
+        /* Estilos para o Player de Vídeo */
+        .video-container {
+            display: none;
+            position: fixed;
+            z-index: 3000; /* Garante que fique acima do modal */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            padding: 20px;
+        }
+
+        .video-container iframe {
+            width: 100%;
+            height: 100%;
+        }
+
+        .video-container .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #e50914; /* Cor vermelha */
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 4000;
+        }
+    </style>
 </head>
 <body>
     <h1>Miniflix</h1>
@@ -20,7 +107,23 @@
         </div>
     </section>
 
+    <div id="series-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-sidebar">
+                <h3>Temporadas</h3>
+                <ul id="seasons-list" class="modal-list">
+                    </ul>
+            </div>
+            <div class="modal-main-content">
+                <h3>Episódios</h3>
+                <ul id="episodes-list" class="modal-list">
+                    </ul>
+            </div>
+        </div>
+    </div>
+
     <div id="video-container" class="video-container">
+        <span class="close-btn">&times;</span>
         </div>
 
     <script>
@@ -58,7 +161,7 @@
                         episodios: [
                             {
                                 titulo: "Episódio 1",
-                                video_url: "https://odysee.com/%24/embed/%40FilmesBolados%3Aa%2FMy-Little-Pony-EP01%3Ad?r=56naN6JoAapUYszd6LboKc1nnse45nAX&signature=88af0dbfc7072ebcf228fb6767ae5e46fd9b2c8be8224f41d99acd80d51721617c3034db7f22c00ac712659e4e88ae8856c79e849ce0a3a1d9f3f41b14aa3f89&signature_ts=1758554770"
+                                video_url: "https://odysee.com/$/embed/@FilmesBolados:a/My-Little-Pony-EP01:d?r=56naN6JoAapUYszd6LboKc1nnse45nAX&signature=88af0dbfc7072ebcf228fb6767ae5e46fd9b2c8be8224f41d99acd80d51721617c3034db7f22c00ac712659e4e88ae8856c79e849ce0a3a1d9f3f41b14aa3f89&signature_ts=1758554770"
                             },
                             {
                                 titulo: "Episódio 2",
@@ -71,9 +174,12 @@
         ];
 
         let conteudoAtual = filmesData;
-        let historico = []; // Para navegação de volta
         
         const videoContainer = document.getElementById('video-container');
+        const seriesModal = document.getElementById('series-modal');
+        const seasonsList = document.getElementById('seasons-list');
+        const episodesList = document.getElementById('episodes-list');
+        const videoCloseBtn = videoContainer.querySelector('.close-btn');
 
         function renderizarConteudo(conteudo) {
             const lista = document.getElementById('lista-conteudo');
@@ -94,7 +200,6 @@
                 
                 itemElement.addEventListener('click', () => {
                     if (item.type === 'video' || item.hasOwnProperty('video_url')) {
-                        // Se for um filme ou episódio, reproduz
                         videoContainer.innerHTML = ''; 
                         const iframe = document.createElement('iframe');
                         iframe.src = item.video_url;
@@ -108,15 +213,8 @@
                         videoContainer.style.display = 'block';
                         videoContainer.appendChild(iframe);
                     } else if (item.type === 'series') {
-                        // Se for uma série, navega para a tela de temporadas
-                        historico.push(conteudoAtual);
-                        conteudoAtual = item.temporadas;
-                        renderizarConteudo(item.temporadas);
-                    } else if (item.episodios) {
-                        // Se for uma temporada, navega para a tela de episódios
-                        historico.push(conteudoAtual);
-                        conteudoAtual = item.episodios;
-                        renderizarConteudo(item.episodios);
+                        seriesModal.style.display = 'flex';
+                        abrirModalSeries(item.temporadas);
                     }
                 });
 
@@ -125,33 +223,81 @@
             });
         }
         
+        function abrirModalSeries(temporadas) {
+            seriesModal.style.display = 'flex';
+            seasonsList.innerHTML = '';
+            episodesList.innerHTML = '';
+
+            temporadas.forEach((temporada, index) => {
+                const li = document.createElement('li');
+                li.textContent = temporada.titulo;
+                seasonsList.appendChild(li);
+
+                li.addEventListener('click', () => {
+                    document.querySelectorAll('#seasons-list li').forEach(el => el.classList.remove('selecionado'));
+                    li.classList.add('selecionado');
+                    renderizarEpisodios(temporada.episodios);
+                });
+
+                if (index === 0) {
+                    li.click();
+                }
+            });
+        }
+
+        function renderizarEpisodios(episodios) {
+            episodesList.innerHTML = '';
+            episodios.forEach(episodio => {
+                const li = document.createElement('li');
+                li.textContent = episodio.titulo;
+                episodesList.appendChild(li);
+
+                li.addEventListener('click', () => {
+                    videoContainer.innerHTML = ''; 
+                    const iframe = document.createElement('iframe');
+                    iframe.src = episodio.video_url;
+                    iframe.setAttribute('width', '100%');
+                    iframe.setAttribute('height', '100%');
+                    iframe.setAttribute('allowfullscreen', true);
+                    iframe.setAttribute('webkitallowfullscreen', true);
+                    iframe.setAttribute('mozallowfullscreen', true);
+                    iframe.setAttribute('frameborder', '0');
+
+                    videoContainer.style.display = 'block';
+                    videoContainer.appendChild(iframe);
+                });
+            });
+        }
+
         document.getElementById('btn-filmes').addEventListener('click', () => {
             document.getElementById('btn-filmes').classList.add('ativo');
             document.getElementById('btn-series').classList.remove('ativo');
-            historico = [];
-            conteudoAtual = filmesData;
             renderizarConteudo(filmesData);
         });
 
         document.getElementById('btn-series').addEventListener('click', () => {
             document.getElementById('btn-series').classList.add('ativo');
             document.getElementById('btn-filmes').classList.remove('ativo');
-            historico = [];
-            conteudoAtual = seriesData;
             renderizarConteudo(seriesData);
         });
         
+        // Listener para fechar o popup ou o player de vídeo
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape' || event.key === 'Back' || event.key === 'Backspace') {
-                if (historico.length > 0) {
-                    conteudoAtual = historico.pop();
-                    renderizarConteudo(conteudoAtual);
-                } else {
-                    if (videoContainer.style.display === 'block') {
-                        videoContainer.innerHTML = '';
-                        videoContainer.style.display = 'none';
-                    }
+                if (seriesModal.style.display === 'flex') {
+                    seriesModal.style.display = 'none';
+                } else if (videoContainer.style.display === 'block') {
+                    videoContainer.innerHTML = '';
+                    videoContainer.style.display = 'none';
                 }
+            }
+        });
+
+        // Adiciona a funcionalidade ao botão de fechar do player
+        videoCloseBtn.addEventListener('click', () => {
+            if (videoContainer.style.display === 'block') {
+                videoContainer.innerHTML = '';
+                videoContainer.style.display = 'none';
             }
         });
 
