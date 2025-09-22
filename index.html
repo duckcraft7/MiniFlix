@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miniflix Odysee</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Miniflix</h1>
+
+    <div class="navegacao">
+        <button id="btn-filmes" class="ativo">Filmes</button>
+        <button id="btn-series">Séries</button>
+    </div>
+
+    <section>
+        <div id="lista-conteudo" class="lista-conteudo">
+            <p>Carregando conteúdo...</p>
+        </div>
+    </section>
+
+    <div id="video-container" class="video-container">
+        </div>
+
+    <script>
+        const filmesData = [
+            {
+                titulo: "Cronicas de Narnia: Príncipe Caspian",
+                imagem_url: "https://i.imgur.com/6EEo3Up.jpeg",
+                video_url: "https://odysee.com/%24/embed/%40FilmesBolados%3Aa%2FFilme2%3A3?r=56naN6JoAapUYszd6LboKc1nnse45nAX",
+                type: 'video'
+            },
+            {
+                titulo: "Cronicas de Narnia: Leão e a Feiticeira do Guarda Roupa",
+                imagem_url: "https://i.imgur.com/wci8bLN.jpeg",
+                video_url: "https://odysee.com/%24/embed/%40FilmesBolados%3Aa%2Ffilmes1%3Aa?r=56naN6JoAapUYszd6LboKc1nnse45nAX",
+                type: 'video'
+            },
+            {
+                titulo: "Cronicas de Narnia: A viagem do Peregrino da Alvorada",
+                imagem_url: "https://i.imgur.com/2RHgpjm.jpeg",
+                video_url: "https://odysee.com/%24/embed/%40FilmesBolados%3Aa%2FCronicas-de-Narnia--A-via%3A2?r=56naN6JoAapUYszd6LboKc1nnse45nAX",
+                type: 'video'
+            }
+        ];
+        
+        const seriesData = [
+            // Adicione suas séries aqui, se necessário
+        ];
+
+        let conteudoAtual = filmesData;
+
+        const videoContainer = document.getElementById('video-container');
+
+        function renderizarConteudo(conteudo) {
+            const lista = document.getElementById('lista-conteudo');
+            lista.innerHTML = '';
+            
+            if (conteudo.length === 0) {
+                lista.innerHTML = '<p>Nenhum item encontrado.</p>';
+                return;
+            }
+
+            conteudo.forEach((item) => {
+                const itemElement = document.createElement('div');
+                itemElement.classList.add('item-conteudo');
+                
+                const imagemElement = document.createElement('img');
+                imagemElement.src = item.imagem_url;
+                imagemElement.alt = item.titulo;
+                
+                itemElement.addEventListener('click', () => {
+                    // Limpa o conteúdo do container para evitar múltiplos players
+                    videoContainer.innerHTML = ''; 
+                    
+                    const iframe = document.createElement('iframe');
+                    iframe.src = item.video_url;
+                    iframe.setAttribute('width', '100%');
+                    iframe.setAttribute('height', '100%');
+                    iframe.setAttribute('allowfullscreen', true);
+                    iframe.setAttribute('webkitallowfullscreen', true);
+                    iframe.setAttribute('mozallowfullscreen', true);
+                    iframe.setAttribute('frameborder', '0');
+
+                    videoContainer.style.display = 'block';
+                    videoContainer.appendChild(iframe);
+                });
+
+                itemElement.appendChild(imagemElement);
+                lista.appendChild(itemElement);
+            });
+        }
+        
+        document.getElementById('btn-filmes').addEventListener('click', () => {
+            document.getElementById('btn-filmes').classList.add('ativo');
+            document.getElementById('btn-series').classList.remove('ativo');
+            renderizarConteudo(filmesData);
+        });
+
+        document.getElementById('btn-series').addEventListener('click', () => {
+            document.getElementById('btn-series').classList.add('ativo');
+            document.getElementById('btn-filmes').classList.remove('ativo');
+            renderizarConteudo(seriesData);
+        });
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            renderizarConteudo(filmesData);
+        });
+    </script>
+</body>
+</html>
