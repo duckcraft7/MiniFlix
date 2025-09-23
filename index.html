@@ -6,14 +6,64 @@
     <title>Miniflix Site</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        .page {
+        /* Estilos para o Popup (Modal) */
+        .modal {
             display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            padding: 50px;
         }
 
-        .page.active {
-            display: block;
+        .modal-content {
+            background-color: #1a1a1a;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            height: 80%;
+            display: flex;
+            gap: 20px;
+            position: relative;
         }
 
+        .modal-sidebar {
+            width: 30%;
+            overflow-y: auto;
+        }
+
+        .modal-main-content {
+            width: 70%;
+            overflow-y: auto;
+        }
+
+        .modal-sidebar h3, .modal-main-content h3 {
+            color: #e50914;
+        }
+
+        .modal-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .modal-list li {
+            padding: 10px;
+            border-bottom: 1px solid #333;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .modal-list li:hover, .modal-list li.selecionado {
+            background-color: #333;
+        }
+
+        /* Estilos para o Player de Vídeo */
         .video-container {
             display: none;
             position: fixed;
@@ -52,17 +102,14 @@
         <button id="btn-series">Séries</button>
     </div>
 
-    <div id="main-page" class="page active">
-        <section>
-            <div id="lista-conteudo-filmes" class="lista-conteudo">
-                <p>Carregando conteúdo...</p>
-            </div>
-        </section>
-    </div>
+    <section>
+        <div id="lista-conteudo" class="lista-conteudo">
+            <p>Carregando conteúdo...</p>
+        </div>
+    </section>
 
-    <div id="series-detail-page" class="page">
-        <button id="btn-voltar-series">Voltar</button>
-        <div id="temporadas-episodios-container" style="display:flex;">
+    <div id="series-modal" class="modal">
+        <div class="modal-content">
             <div class="modal-sidebar">
                 <h3>Temporadas</h3>
                 <ul id="seasons-list" class="modal-list">
@@ -84,19 +131,19 @@
         const filmesData = [
             {
                 titulo: "Cronicas de Narnia: Príncipe Caspian",
-                imagem_url: "https://i.imgur.com/6EEo0Up.jpeg",
+                imagem_url: "https://i.ibb.co/5gtx3Zz3/filme2-1.jpg",
                 video_url: "https://odysee.com/%24/embed/%40FilmesBolados%3Aa%2FFilme2%3A3?r=56naN6JoAapUYszd6LboKc1nnse45nAX",
                 type: 'video'
             },
             {
                 titulo: "Cronicas de Narnia: Leão e a Feiticeira do Guarda Roupa",
-                imagem_url: "https://i.imgur.com/wci8bLN.jpeg",
+                imagem_url: "https://i.ibb.co/FLm2gBBg/filme1.jpg",
                 video_url: "https://odysee.com/%24/embed/%40FilmesBolados%3Aa%2Ffilmes1%3Aa?r=56naN6JoAapUYszd6LboKc1nnse45nAX",
                 type: 'video'
             },
             {
                 titulo: "Cronicas de Narnia: A viagem do Peregrino da Alvorada",
-                imagem_url: "https://i.imgur.com/2RHgpjm.jpeg",
+                imagem_url: "https://i.ibb.co/BVKgyk8s/4.jpg",
                 video_url: "https://odysee.com/%24/embed/%40FilmesBolados%3Aa%2FCronicas-de-Narnia--A-via%3A2?r=56naN6JoAapUYszd6LboKc1nnse45nAX",
                 type: 'video'
             }
@@ -105,7 +152,7 @@
         const seriesData = [
             {
                 titulo: "My Little Pony",
-                imagem_url: "https://i.imgur.com/gMguNBs.jpeg",
+                imagem_url: "https://i.ibb.co/FqHvsxJr/poster.jpg",
                 type: 'series',
                 temporadas: [
                     {
