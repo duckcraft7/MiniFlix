@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Miniflix Linux</title>
+    <title>Miniflix Site</title>
     <link rel="stylesheet" href="style.css">
     <style>
         /* Estilos para o Popup (Modal) */
@@ -67,25 +67,26 @@
         .video-container {
             display: none;
             position: fixed;
-            z-index: 3000; /* Garante que fique acima do modal */
+            z-index: 3000;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
             background-color: black;
-            padding: 20px;
+            padding: 0;
         }
 
         .video-container iframe {
             width: 100%;
             height: 100%;
+            display: block;
         }
 
         .video-container .close-btn {
             position: absolute;
             top: 20px;
             right: 20px;
-            color: #e50914; /* Cor vermelha */
+            color: #e50914;
             font-size: 30px;
             font-weight: bold;
             cursor: pointer;
@@ -123,11 +124,10 @@
     </div>
 
     <div id="video-container" class="video-container">
-        <span class="close-btn">&times;</span>
+        <span id="close-player" class="close-btn">&times;</span>
         </div>
 
     <script>
-        // Estrutura de dados para filmes
         const filmesData = [
             {
                 titulo: "Cronicas de Narnia: Príncipe Caspian",
@@ -149,7 +149,6 @@
             }
         ];
         
-        // Estrutura de dados para séries
         const seriesData = [
             {
                 titulo: "My Little Pony",
@@ -166,7 +165,39 @@
                             {
                                 titulo: "Episódio 2",
                                 video_url: "https://odysee.com/%24/embed/%40FilmesBolados%3Aa%2FMy-Little-Pony-EP02%3Ad?r=56naN6JoAapUYszd6LboKc1nnse45nAX&signature=7ad0148ca20b560bc4a3c0ba109d01f232951124709e2a4580c26db4b1be864b49c19fa2a502e79d6be45caa17fc536a149980aba12d5c457cc76b21e82db558&signature_ts=1758554928"
-                            }
+                            },
+                            {
+                                titulo: "Episódio 3",
+                                video_url: "https://odysee.com/%24/embed/%40FilmesBolados%3Aa%2F1X03---The-Ticket-Master%3A2?r=56naN6JoAapUYszd6LboKc1nnse45nAX"
+                            },
+                            {
+                                titulo: "Episódio 4",
+                                video_url: "https://odysee.com/%24/embed/%40FilmesBolados%3Aa%2F1X04---Applebuck-Season%3A1?r=56naN6JoAapUYszd6LboKc1nnse45nAX"
+                            },
+                            {
+                                titulo: "Episódio 5",
+                                video_url: "https://odysee.com/%24/embed/%40FilmesBolados%3Aa%2F1X05---Griffon-the-Brush-Off%3Af?r=56naN6JoAapUYszd6LboKc1nnse45nAX"
+                            },
+                            {
+                                titulo: "Episódio 6",
+                                video_url: "https://odysee.com/%24/embed/%40FilmesBolados%3Aa%2F1X06---Boast-Busters%3Ac?r=56naN6JoAapUYszd6LboKc1nnse45nAX"
+                            },
+                            {
+                                titulo: "Episódio 7",
+                                video_url: "https://odysee.com/%24/embed/%40FilmesBolados%3Aa%2F1X07---Dragonshy%3Af?r=56naN6JoAapUYszd6LboKc1nnse45nAX"
+                            },
+                            {
+                                titulo: "Episódio 8",
+                                video_url: "https://odysee.com/%24/embed/%40FilmesBolados%3Aa%2F1X08---Look-Before-You-Sleep%3A7?r=56naN6JoAapUYszd6LboKc1nnse45nAX"
+                            },
+                            {
+                                titulo: "Episódio 9",
+                                video_url: "https://odysee.com/%24/embed/%40FilmesBolados%3Aa%2F1X09---Bridle-Gossip%3A1?r=56naN6JoAapUYszd6LboKc1nnse45nAX"
+                            },
+                            {
+                                titulo: "Episódio 10",
+                                video_url: "https://odysee.com/%24/embed/%40FilmesBolados%3Aa%2F1X10---Swarm-of-the-Century%3Aa?r=56naN6JoAapUYszd6LboKc1nnse45nAX"
+                            },
                         ]
                     }
                 ]
@@ -179,7 +210,7 @@
         const seriesModal = document.getElementById('series-modal');
         const seasonsList = document.getElementById('seasons-list');
         const episodesList = document.getElementById('episodes-list');
-        const videoCloseBtn = videoContainer.querySelector('.close-btn');
+        const videoCloseBtn = document.getElementById('close-player');
 
         function renderizarConteudo(conteudo) {
             const lista = document.getElementById('lista-conteudo');
@@ -200,7 +231,6 @@
                 
                 itemElement.addEventListener('click', () => {
                     if (item.type === 'video' || item.hasOwnProperty('video_url')) {
-                        videoContainer.innerHTML = ''; 
                         const iframe = document.createElement('iframe');
                         iframe.src = item.video_url;
                         iframe.setAttribute('width', '100%');
@@ -253,7 +283,7 @@
                 episodesList.appendChild(li);
 
                 li.addEventListener('click', () => {
-                    videoContainer.innerHTML = ''; 
+                    videoContainer.innerHTML = '';
                     const iframe = document.createElement('iframe');
                     iframe.src = episodio.video_url;
                     iframe.setAttribute('width', '100%');
@@ -281,19 +311,6 @@
             renderizarConteudo(seriesData);
         });
         
-        // Listener para fechar o popup ou o player de vídeo
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' || event.key === 'Back' || event.key === 'Backspace') {
-                if (seriesModal.style.display === 'flex') {
-                    seriesModal.style.display = 'none';
-                } else if (videoContainer.style.display === 'block') {
-                    videoContainer.innerHTML = '';
-                    videoContainer.style.display = 'none';
-                }
-            }
-        });
-
-        // Adiciona a funcionalidade ao botão de fechar do player
         videoCloseBtn.addEventListener('click', () => {
             if (videoContainer.style.display === 'block') {
                 videoContainer.innerHTML = '';
