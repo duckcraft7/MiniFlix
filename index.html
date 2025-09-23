@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Miniflix LG TV</title>
+    <title>Miniflix Site</title>
     <link rel="stylesheet" href="style.css">
     <style>
         /* Estilos para o Popup (Modal) */
@@ -98,8 +98,8 @@
     <h1>Miniflix</h1>
 
     <div class="navegacao">
-        <button id="btn-filmes" class="ativo" tabindex="0">Filmes</button>
-        <button id="btn-series" tabindex="1">Séries</button>
+        <button id="btn-filmes" class="ativo">Filmes</button>
+        <button id="btn-series">Séries</button>
     </div>
 
     <section>
@@ -205,19 +205,14 @@
         ];
 
         let conteudoAtual = filmesData;
-        let itemSelecionadoIndex = 0;
+        let historico = [];
         let isPlayerActive = false;
-        let currentFocus = 'buttons';
-
+        
         const videoContainer = document.getElementById('video-container');
         const seriesModal = document.getElementById('series-modal');
         const seasonsList = document.getElementById('seasons-list');
         const episodesList = document.getElementById('episodes-list');
         const videoCloseBtn = document.getElementById('close-player');
-
-        const filmesBtn = document.getElementById('btn-filmes');
-        const seriesBtn = document.getElementById('btn-series');
-        const navButtons = [filmesBtn, seriesBtn];
 
         function renderizarConteudo(conteudo) {
             const lista = document.getElementById('lista-conteudo');
@@ -228,29 +223,37 @@
                 return;
             }
 
-            conteudo.forEach((item, index) => {
+            conteudo.forEach((item) => {
                 const itemElement = document.createElement('div');
                 itemElement.classList.add('item-conteudo');
-                itemElement.setAttribute('tabindex', index);
                 
                 const imagemElement = document.createElement('img');
                 imagemElement.src = item.imagem_url || (item.episodios ? item.imagem_url : 'https://via.placeholder.com/200x300.png?text=Episodio');
                 imagemElement.alt = item.titulo;
                 
+                itemElement.addEventListener('click', () => {
+                    if (item.type === 'video' || item.hasOwnProperty('video_url')) {
+                        // Se for um filme ou episódio, reproduz
+                        const iframe = document.createElement('iframe');
+                        iframe.src = item.video_url;
+                        iframe.setAttribute('width', '100%');
+                        iframe.setAttribute('height', '100%');
+                        iframe.setAttribute('allowfullscreen', true);
+                        iframe.setAttribute('webkitallowfullscreen', true);
+                        iframe.setAttribute('mozallowfullscreen', true);
+                        iframe.setAttribute('frameborder', '0');
+
+                        videoContainer.style.display = 'block';
+                        videoContainer.appendChild(iframe);
+                    } else if (item.type === 'series') {
+                        seriesModal.style.display = 'flex';
+                        abrirModalSeries(item.temporadas);
+                    }
+                });
+
                 itemElement.appendChild(imagemElement);
                 lista.appendChild(itemElement);
             });
-            
-            const itensDOM = document.querySelectorAll('.item-conteudo');
-            if (itensDOM.length > 0) {
-                itemSelecionadoIndex = 0;
-                itensDOM[itemSelecionadoIndex].classList.add('selecionado');
-                itensDOM[itemSelecionadoIndex].focus();
-                currentFocus = 'content';
-            } else {
-                currentFocus = 'buttons';
-                navButtons[0].focus();
-            }
         }
         
         function abrirModalSeries(temporadas) {
@@ -261,7 +264,6 @@
             temporadas.forEach((temporada, index) => {
                 const li = document.createElement('li');
                 li.textContent = temporada.titulo;
-                li.setAttribute('tabindex', index);
                 seasonsList.appendChild(li);
 
                 li.addEventListener('click', () => {
@@ -274,19 +276,17 @@
                     li.click();
                 }
             });
-            currentFocus = 'seasons';
         }
 
         function renderizarEpisodios(episodios) {
             episodesList.innerHTML = '';
-            episodios.forEach((episodio, index) => {
+            episodios.forEach(episodio => {
                 const li = document.createElement('li');
                 li.textContent = episodio.titulo;
-                li.setAttribute('tabindex', index);
                 episodesList.appendChild(li);
 
                 li.addEventListener('click', () => {
-                    videoContainer.innerHTML = `<span id="close-player" class="close-btn">&times;</span>`;
+                    videoContainer.innerHTML = '';
                     const iframe = document.createElement('iframe');
                     iframe.src = episodio.video_url;
                     iframe.setAttribute('width', '100%');
@@ -298,136 +298,26 @@
 
                     videoContainer.style.display = 'block';
                     videoContainer.appendChild(iframe);
-                    
-                    const newCloseBtn = document.getElementById('close-player');
-                    newCloseBtn.addEventListener('click', () => {
-                        videoContainer.innerHTML = '';
-                        videoContainer.style.display = 'none';
-                    });
                 });
             });
-            currentFocus = 'episodes';
         }
 
-        filmesBtn.addEventListener('click', () => {
-            filmesBtn.classList.add('ativo');
-            seriesBtn.classList.remove('ativo');
+        document.getElementById('btn-filmes').addEventListener('click', () => {
+            document.getElementById('btn-filmes').classList.add('ativo');
+            document.getElementById('btn-series').classList.remove('ativo');
             renderizarConteudo(filmesData);
-            currentFocus = 'content';
         });
 
-        seriesBtn.addEventListener('click', () => {
-            seriesBtn.classList.add('ativo');
-            filmesBtn.classList.remove('ativo');
+        document.getElementById('btn-series').addEventListener('click', () => {
+            document.getElementById('btn-series').classList.add('ativo');
+            document.getElementById('btn-filmes').classList.remove('ativo');
             renderizarConteudo(seriesData);
-            currentFocus = 'content';
-        });
-
-        navButtons[0].addEventListener('focus', () => {
-            currentFocus = 'buttons';
-            navButtons[1].classList.remove('selecionado');
-            navButtons[0].classList.add('selecionado');
         });
         
-        navButtons[1].addEventListener('focus', () => {
-            currentFocus = 'buttons';
-            navButtons[0].classList.remove('selecionado');
-            navButtons[1].classList.add('selecionado');
-        });
-
-        document.addEventListener('keydown', (event) => {
-            const key = event.key;
-            const itensDOM = document.querySelectorAll('.item-conteudo');
-            const navButtonsDOM = document.querySelectorAll('.navegacao button');
-
-            if (isPlayerActive) {
-                if (key === 'Escape' || key === 'Back') {
-                    isPlayerActive = false;
-                    videoContainer.innerHTML = '';
-                    videoContainer.style.display = 'none';
-                    itensDOM[itemSelecionadoIndex].focus();
-                }
-                return;
-            }
-
-            if (seriesModal.style.display === 'flex') {
-                const seasonsDOM = document.querySelectorAll('#seasons-list li');
-                const episodesDOM = document.querySelectorAll('#episodes-list li');
-                let seasonIndex = Array.from(seasonsDOM).findIndex(el => el.classList.contains('selecionado'));
-                let episodeIndex = Array.from(episodesDOM).findIndex(el => el.classList.contains('selecionado'));
-
-                if (key === 'Escape' || key === 'Back') {
-                    seriesModal.style.display = 'none';
-                    itensDOM[itemSelecionadoIndex].focus();
-                } else if (key === 'ArrowUp' && currentFocus === 'seasons') {
-                    if (seasonIndex > 0) {
-                        seasonsDOM[seasonIndex].classList.remove('selecionado');
-                        seasonIndex--;
-                        seasonsDOM[seasonIndex].click();
-                        seasonsDOM[seasonIndex].focus();
-                    }
-                } else if (key === 'ArrowDown' && currentFocus === 'seasons') {
-                    if (seasonIndex < seasonsDOM.length - 1) {
-                        seasonsDOM[seasonIndex].classList.remove('selecionado');
-                        seasonIndex++;
-                        seasonsDOM[seasonIndex].click();
-                        seasonsDOM[seasonIndex].focus();
-                    }
-                } else if (key === 'ArrowRight' && currentFocus === 'seasons') {
-                    seasonsDOM[seasonIndex].classList.remove('selecionado');
-                    episodesDOM[0].classList.add('selecionado');
-                    episodesDOM[0].focus();
-                    currentFocus = 'episodes';
-                } else if (key === 'ArrowLeft' && currentFocus === 'episodes') {
-                    episodesDOM[episodeIndex].classList.remove('selecionado');
-                    seasonsDOM[seasonIndex].classList.add('selecionado');
-                    seasonsDOM[seasonIndex].focus();
-                    currentFocus = 'seasons';
-                } else if (key === 'ArrowUp' && currentFocus === 'episodes') {
-                    if (episodeIndex > 0) {
-                        episodesDOM[episodeIndex].classList.remove('selecionado');
-                        episodeIndex--;
-                        episodesDOM[episodeIndex].classList.add('selecionado');
-                        episodesDOM[episodeIndex].focus();
-                    }
-                } else if (key === 'ArrowDown' && currentFocus === 'episodes') {
-                    if (episodeIndex < episodesDOM.length - 1) {
-                        episodesDOM[episodeIndex].classList.remove('selecionado');
-                        episodeIndex++;
-                        episodesDOM[episodeIndex].classList.add('selecionado');
-                        episodesDOM[episodeIndex].focus();
-                    }
-                } else if (key === 'Enter') {
-                    if (currentFocus === 'episodes') {
-                        episodesDOM[episodeIndex].click();
-                    } else if (currentFocus === 'seasons') {
-                        // Clicar na temporada já renderiza os episódios, então o enter aqui não faria nada além de recarregar a lista.
-                    }
-                }
-
-                return;
-            }
-            
-            if (itensDOM.length === 0) return;
-
-            itensDOM[itemSelecionadoIndex].classList.remove('selecionado');
-
-            if (key === 'ArrowRight' && itemSelecionadoIndex < itensDOM.length - 1) {
-                itemSelecionadoIndex++;
-            } else if (key === 'ArrowLeft' && itemSelecionadoIndex > 0) {
-                itemSelecionadoIndex--;
-            } else if (key === 'ArrowUp') {
-                navButtonsDOM[0].classList.add('selecionado');
-                navButtonsDOM[0].focus();
-                itensDOM[itemSelecionadoIndex].classList.remove('selecionado');
-                currentFocus = 'buttons';
-            } else if (key === 'Enter') {
-                itensDOM[itemSelecionadoIndex].click();
-            }
-
-            if (currentFocus === 'content') {
-                itensDOM[itemSelecionadoIndex].classList.add('selecionado');
-                itensDOM[itemSelecionadoIndex].focus();
+        videoCloseBtn.addEventListener('click', () => {
+            if (videoContainer.style.display === 'block') {
+                videoContainer.innerHTML = '';
+                videoContainer.style.display = 'none';
             }
         });
 
