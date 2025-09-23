@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Miniflix</title>
+    <title>Miniflix Site</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .page {
@@ -48,13 +48,13 @@
     <h1>Miniflix</h1>
 
     <div class="navegacao">
-        <button id="btn-filmes" class="ativo" tabindex="0">Filmes</button>
-        <button id="btn-series" tabindex="1">Séries</button>
+        <button id="btn-filmes" class="ativo">Filmes</button>
+        <button id="btn-series">Séries</button>
     </div>
 
     <div id="main-page" class="page active">
         <section>
-            <div id="lista-conteudo" class="lista-conteudo">
+            <div id="lista-conteudo-filmes" class="lista-conteudo">
                 <p>Carregando conteúdo...</p>
             </div>
         </section>
@@ -84,7 +84,7 @@
         const filmesData = [
             {
                 titulo: "Cronicas de Narnia: Príncipe Caspian",
-                imagem_url: "https://i.imgur.com/6EEo3Up.jpeg",
+                imagem_url: "https://i.imgur.com/6EEo0Up.jpeg",
                 video_url: "https://odysee.com/%24/embed/%40FilmesBolados%3Aa%2FFilme2%3A3?r=56naN6JoAapUYszd6LboKc1nnse45nAX",
                 type: 'video'
             },
@@ -158,74 +158,63 @@
         ];
 
         let conteudoAtual = filmesData;
-        let itemSelecionadoIndex = 0;
-        let isPlayerActive = false;
-        let currentPage = 'main';
-
-        const filmesPage = document.getElementById('filmes-page');
-        const seriesPage = document.getElementById('series-page');
-        const mainPage = document.getElementById('main-page');
-        const seriesDetailPage = document.getElementById('series-detail-page');
-
-        const filmesBtn = document.getElementById('btn-filmes');
-        const seriesBtn = document.getElementById('btn-series');
-
-        const voltarSeriesBtn = document.getElementById('btn-voltar-series');
         
         const videoContainer = document.getElementById('video-container');
+        const seriesModal = document.getElementById('series-modal');
+        const seasonsList = document.getElementById('seasons-list');
+        const episodesList = document.getElementById('episodes-list');
         const videoCloseBtn = document.getElementById('close-player');
 
-        function renderizarConteudo(conteudo, container) {
-            container.innerHTML = '';
+        function renderizarConteudo(conteudo) {
+            const lista = document.getElementById('lista-conteudo');
+            lista.innerHTML = '';
             
             if (conteudo.length === 0) {
-                container.innerHTML = '<p>Nenhum item encontrado.</p>';
+                lista.innerHTML = '<p>Nenhum item encontrado.</p>';
                 return;
             }
 
-            conteudo.forEach((item, index) => {
+            conteudo.forEach((item) => {
                 const itemElement = document.createElement('div');
                 itemElement.classList.add('item-conteudo');
-                itemElement.setAttribute('tabindex', index);
                 
                 const imagemElement = document.createElement('img');
-                imagemElement.src = item.imagem_url || 'https://via.placeholder.com/200x300.png?text=Placeholder';
+                imagemElement.src = item.imagem_url || (item.episodios ? item.imagem_url : 'https://via.placeholder.com/200x300.png?text=Episodio');
                 imagemElement.alt = item.titulo;
                 
                 itemElement.addEventListener('click', () => {
                     if (item.type === 'video' || item.hasOwnProperty('video_url')) {
-                        abrirPlayerVideo(item.video_url);
+                        // Se for um filme ou episódio, reproduz
+                        const iframe = document.createElement('iframe');
+                        iframe.src = item.video_url;
+                        iframe.setAttribute('width', '100%');
+                        iframe.setAttribute('height', '100%');
+                        iframe.setAttribute('allowfullscreen', true);
+                        iframe.setAttribute('webkitallowfullscreen', true);
+                        iframe.setAttribute('mozallowfullscreen', true);
+                        iframe.setAttribute('frameborder', '0');
+
+                        videoContainer.style.display = 'block';
+                        videoContainer.appendChild(iframe);
                     } else if (item.type === 'series') {
-                        // Navega para a página de detalhes da série
-                        currentPage = 'series-detail';
-                        mainPage.classList.remove('active');
-                        seriesDetailPage.classList.add('active');
-                        renderizarDetalhesSeries(item);
+                        seriesModal.style.display = 'flex';
+                        abrirModalSeries(item.temporadas);
                     }
                 });
 
                 itemElement.appendChild(imagemElement);
-                container.appendChild(itemElement);
+                lista.appendChild(itemElement);
             });
-            
-            const itensDOM = container.querySelectorAll('.item-conteudo');
-            if (itensDOM.length > 0) {
-                itemSelecionadoIndex = 0;
-                itensDOM[itemSelecionadoIndex].classList.add('selecionado');
-                itensDOM[itemSelecionadoIndex].focus();
-            }
         }
-
-        function renderizarDetalhesSeries(serie) {
-            const seasonsList = document.getElementById('seasons-list');
-            const episodesList = document.getElementById('episodes-list');
+        
+        function abrirModalSeries(temporadas) {
+            seriesModal.style.display = 'flex';
             seasonsList.innerHTML = '';
             episodesList.innerHTML = '';
 
-            serie.temporadas.forEach((temporada, index) => {
+            temporadas.forEach((temporada, index) => {
                 const li = document.createElement('li');
                 li.textContent = temporada.titulo;
-                li.setAttribute('tabindex', index);
                 seasonsList.appendChild(li);
 
                 li.addEventListener('click', () => {
@@ -241,66 +230,50 @@
         }
 
         function renderizarEpisodios(episodios) {
-            const episodesList = document.getElementById('episodes-list');
             episodesList.innerHTML = '';
-            episodios.forEach((episodio, index) => {
+            episodios.forEach(episodio => {
                 const li = document.createElement('li');
                 li.textContent = episodio.titulo;
-                li.setAttribute('tabindex', index);
                 episodesList.appendChild(li);
 
                 li.addEventListener('click', () => {
-                    abrirPlayerVideo(episodio.video_url);
-                });
-            });
-        }
-        
-        function abrirPlayerVideo(videoUrl) {
-            videoContainer.innerHTML = `<span id="close-player" class="close-btn">&times;</span>`;
-            const iframe = document.createElement('iframe');
-            iframe.src = videoUrl;
-            iframe.setAttribute('width', '100%');
-            iframe.setAttribute('height', '100%');
-            iframe.setAttribute('allowfullscreen', true);
-            iframe.setAttribute('webkitallowfullscreen', true);
-            iframe.setAttribute('mozallowfullscreen', true);
-            iframe.setAttribute('frameborder', '0');
-            videoContainer.appendChild(iframe);
-            videoContainer.style.display = 'block';
+                    videoContainer.innerHTML = ''; 
+                    const iframe = document.createElement('iframe');
+                    iframe.src = episodio.video_url;
+                    iframe.setAttribute('width', '100%');
+                    iframe.setAttribute('height', '100%');
+                    iframe.setAttribute('allowfullscreen', true);
+                    iframe.setAttribute('webkitallowfullscreen', true);
+                    iframe.setAttribute('mozallowfullscreen', true);
+                    iframe.setAttribute('frameborder', '0');
 
-            const newCloseBtn = document.getElementById('close-player');
-            newCloseBtn.addEventListener('click', () => {
-                videoContainer.innerHTML = '';
-                videoContainer.style.display = 'none';
+                    videoContainer.style.display = 'block';
+                    videoContainer.appendChild(iframe);
+                });
             });
         }
 
         document.getElementById('btn-filmes').addEventListener('click', () => {
             document.getElementById('btn-filmes').classList.add('ativo');
             document.getElementById('btn-series').classList.remove('ativo');
-            renderizarConteudo(filmesData, document.getElementById('lista-conteudo'));
+            renderizarConteudo(filmesData);
         });
 
         document.getElementById('btn-series').addEventListener('click', () => {
             document.getElementById('btn-series').classList.add('ativo');
             document.getElementById('btn-filmes').classList.remove('ativo');
-            renderizarConteudo(seriesData, document.getElementById('lista-conteudo'));
+            renderizarConteudo(seriesData);
         });
         
-        voltarSeriesBtn.addEventListener('click', () => {
-            currentPage = 'main';
-            seriesDetailPage.classList.remove('active');
-            mainPage.classList.add('active');
-            renderizarContedudo(seriesData, document.getElementById('lista-conteudo'));
-        });
-
-        document.addEventListener('keydown', (event) => {
-            // ... (A lógica de navegação do teclado será mais complexa com várias páginas)
-            // Para simplificar, vamos focar no comportamento das páginas
+        videoCloseBtn.addEventListener('click', () => {
+            if (videoContainer.style.display === 'block') {
+                videoContainer.innerHTML = '';
+                videoContainer.style.display = 'none';
+            }
         });
 
         document.addEventListener('DOMContentLoaded', () => {
-            renderizarConteudo(filmesData, document.getElementById('lista-conteudo'));
+            renderizarConteudo(filmesData);
         });
     </script>
 </body>
